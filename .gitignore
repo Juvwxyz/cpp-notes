@@ -1,0 +1,5 @@
+# vscode settings
+.vscode
+
+# generated html files
+*.html
