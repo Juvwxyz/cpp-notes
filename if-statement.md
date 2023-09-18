@@ -44,7 +44,7 @@ else
 // 常见易错点：
 if (condition)
     statement 1;
-    statement 1; // 这条语句不受if控制
+    statement 2; // 这条语句不受if控制
 else
     statement 3; // else分支无法与前面的if匹配
 
@@ -61,7 +61,7 @@ if (condition) ; // 多写了一个分号，相当于跟了一条空语句
 
 从C99开始，`if`语句会建立一个作用域，在条件表达式中引入的名字可以在两个分支中访问，但离开`if`作用域就不再能访问了。并且，它的两个分支语句即使不是复合语句，也会将它当作如同复合语句一样建立一个局部作用域。
 
-当然，由于条件必须是表达式，而C语言很难在表达式中引入新的名字，所以这一点其实很少有人注意到。而且大多数情况下，`if`的分支都是复合语句，它们本来就会建立作用域。
+当然，由于条件必须是表达式，而C语言很难在表达式中引入新的名字，所以这一点其实很难体现出来，也就很少有人注意到。而且大多数情况下，`if`的分支都是复合语句，它们本来就会建立作用域。
 
 ```c
 #include <stdio.h>
@@ -87,7 +87,7 @@ int main(void)
 
 - ### 其他特性
 
-在嵌套的`if`语句中，`else`总是与离他最近的未配对的`if`匹配。为了避免歧义，即使if的分支仅需一条表达式语句，也建议用花括号括起来。另外，善用编辑器的自动格式功能，`if`各分支的缩进也能提示你它们是如何配对的。
+在嵌套的`if`语句中，`else`总是与离他最近的未配对的`if`匹配。为了避免歧义，即使`if`的分支仅需一条表达式语句，也建议用花括号括起来。另外，善用编辑器的自动格式化功能，`if`各分支的缩进也能提示你它们是如何配对的。
 
 ```c
 #include <stdio.h>
@@ -101,18 +101,18 @@ int main() {
 }
 ```
 
-另外，`if-else-if`也是常见的用法，它并不是什么特殊的语法，只是在外层`if`语句的`else`分支又嵌套了另一个if语句。
+另外，`if - else if`也是常见的用法，它并不是什么特殊的语法，只是在外层`if`语句的`else`分支又嵌套了另一个if语句。
 
 ```c
 int a; scanf("%d", &a);
-/********************/
+
 if (a == 1)
     puts("a == 1");
 else if (a == 2)
     puts("a == 2")
 else
     puts("others");
-/********************/
+
 if (a == 1) {
     puts("a == 1");
 } else {
@@ -123,10 +123,19 @@ if (a == 1) {
         puts("others");
     }
 } 
-/********************/
 ```
 
 最后，只要程序进入了`真分支`，不论是条件为真，还是你用`goto`语句跳过`if`的条件判断直接进入`真分支`，`假分支`都不会执行，执行完`真分支`总是会跳过`假分支`。
+
+```c
+goto true_branch;
+if (0) {
+true_branch:
+    printf("true branch\n");
+} else {
+    printf("false branch\n");
+}
+```
 
 思考题：请问在C89和C99中，下列代码分别输出什么？（答案见文末）
 
@@ -151,8 +160,8 @@ int main(void)
 
 C++兼容99%的C语言`if`语义，并在此基础上进行了扩展。
 
-> `if``(`*`条件`*`)`*`真-分支语句`*
-> `if``(`*`条件`*`)`*`真-分支语句`*`else`*`假-分支语句`*
+> `if (`*`条件`*`)`*`真-分支语句`*
+> `if (`*`条件`*`)`*`真-分支语句`*`else`*`假-分支语句`*
 
 先来看看`条件`的部分。C++从一开始就有`bool`类型，因此在`if`中也不再是将条件表达式与`0`进行比较，而是将结果隐式转换为`bool`。如果转换的结果是`true`，则执行`真-分支语句`；如果转换的结果是`false`，则执行`假-分支语句`。
 
@@ -177,7 +186,7 @@ int main() {
 }
 ```
 
-重载`operator bool`也是相当常见的做法，例如`std::<span class="token class-name">istream`。它转换到`bool`的结果表示上一次读取操作是否成功，成功则为`true`，失败则为`false`。当然，这只是一个笼统的结果，如果想知道具体造成失败的原因，还是要查看`std::<span class="token class-name">istream`的各个标志位。
+重载`operator bool`也是相当常见的做法，例如`std::istream`。它转换到`bool`的结果表示上一次读取操作是否成功，成功则为`true`，失败则为`false`。当然，这只是一个笼统的结果，如果想知道具体造成失败的原因，还是要查看`std::istream`的各个标志位。
 
 ```cpp
 #include <iostream>
@@ -352,14 +361,18 @@ constexpr int foo() {
 int main() {
     static_assert(foo() == 42);
     char str[foo()];
-    printf("%zu\n", sizeof str);
+    switch (sizeof(str)) {
+    case foo():
+        printf("%zu\n", sizeof str);
+        break;
+    }
     printf("%d\n", foo());
 }
 ```
 
 那么重点就是这个`明显常量求值语境`，什么是`明显常量求值语境`呢？简单来说就是语法上要求常量表达式的地方。例如数组的长度、`case`标签后面的表达式、模板的非类型模板实参、上面提到的 constexpr if 的条件等，还有一些`明显常量求值语境`大家可以自行查阅相关文档，这里就不赘述了。
 
-这个特性主要是为了补完`std::<span class="token function">is_constant_evaluated</span>()`的一些缺陷。例如它并不能让普通`if`的分支变成立即函数语境：
+这个特性主要是为了补完`std::is_constant_evaluated()`的一些缺陷。例如它并不能让普通`if`的分支变成立即函数语境：
 
 ```cpp
 consteval int f(int i) { return i; }
@@ -382,7 +395,7 @@ constexpr int g2(int i) {
 }
 ```
 
-再例如，它和constexpr if一起使用会造成意想不到的错误。刚才提到，constexpr if的条件是`明显常量求值语境`，因此`std::<span class="token function">is_constant_evaluated</span>()`会永远返回`true`。
+再例如，它和constexpr if一起使用会造成意想不到的错误。刚才提到，constexpr if的条件是`明显常量求值语境`，因此`std::is_constant_evaluated()`会永远返回`true`。
 
 ```cpp
 constexpr bool f() {
@@ -409,7 +422,7 @@ int a, b;
 int &ref = condition ? a : b;
 ```
 
-- ### Lambda
+- ### Lambda / 函数
 
 当然，用函数将`if`包裹起来也能做到将`if`语句转化为表达式：
 
@@ -428,7 +441,7 @@ int& max(int& a, int& b) {
 bool condition;
 int a, b;
 
-int &ref = [&](){
+int &ref = [&]()->int& {
     if (condition)
         return a;
     else
@@ -466,6 +479,18 @@ void find(node *p, int target) {
     return p;
 }
 ```
+
+- ### 分支消除
+
+有时候，通过一些数学运算可以完全消除掉`if`语句，例如下面的例子，计算一个有符号整数的绝对值。将一个`32`位的有符号整数右移31位，如果它是正数，那肯定得到`0`；如果它是负数，肯定能得到`-1`。于是将这个结果乘以`2`加上`1`，整数得到`1`，负数得到`-1`，乘以自身就能取得它的绝对值。这个技巧也不是很推荐你使用，首要原因当然是它不直观。其次很多人认为消除`if`可以带来性能提升，这实际上是一种误解。在现代CPU的分支预测的加持下，`if`的性能比下面这段复杂的运算更快是很正常的事情。当然，一切都以实际的性能测试为准，没有测试的提前优化是万恶之源。
+
+```cpp
+int32_t abs(int32_t a) {
+    return a * ((a >> 31) * 2 + 1);
+}
+```
+
+
 
 ## 参考资料
 
