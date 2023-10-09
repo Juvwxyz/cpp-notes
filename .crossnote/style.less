@@ -1,9 +1,16 @@
+html body {
+  background-color: #1E1E1E;
+}
 .markdown-preview {
   font-family: "汉仪玄宋", "Noto Serif CJK SC";
   font-size: 24px;
 }
+html body ul li {
+  margin: 0.5em 0
+}
 html body code {
   font-family: "Cascadia Code", "汉仪玄宋";
+  font-weight: 350;
   padding: .05em .25em;
   margin: 0 .1em;
 }
@@ -20,6 +27,7 @@ html body em {
 pre[class*="language-"],
 pre[class*="language-"] code {
   font-family: "Cascadia Code PL SemiLight", "汉仪玄宋", monospace;
+  font-weight: 350;
   color: #DCDCDC;
 }
 pre[class*="language-"] .token.punctuation {
@@ -86,4 +94,12 @@ pre[class*="language-"] .token.comment {
 .token.constant,
 pre[class*="language-"] .token.constant {
   color:#BEB7FF;
+}
+.token.macro-name.function,
+pre[class*="language-"] .token.macro-name.function {
+  color: #beb7ff;
+}
+.token.macro.property,
+pre[class*="language-"] .token.macro.property {
+  color: #dcdcdc;
 }

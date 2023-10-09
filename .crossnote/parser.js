@@ -13,19 +13,19 @@
     
     // 内联代码着色
     html = html.replace(
-      /<code>([\s\S]+?)<\/code>/g,
+      /<code>(.+?)<\/code>/g,
       (_,code) => {
         code = code.replace(
-          /\b(using|typedef|explicit|extern|auto|static|thread_local|const|volatile|public|decltype|consteval|constexpr|operator|bool|false|true|char|short|int|long|unsigned|signed|enum|struct|float|double)\b/g,
+          /\b(typename|nullptr|requires|this|template|void|static_cast|using|typedef|explicit|extern|auto|static|thread_local|const|volatile|public|decltype|consteval|constexpr|operator|bool|false|true|char|short|int|long|unsigned|signed|enum|struct|float|double)\b/g,
           (a,b)=>"<span class=\"token keyword\">"+b+"</span>");
         code = code.replace(
-          /\b(if|else|goto|while|do|for|return|switch|case|break)\b/g,
+          /\b(co_return|if|else|goto|while|do|for|return|switch|case|break|throw)\b/g,
           (a,b)=>"<span class=\"token keyword control\">"+b+"</span>");
           code = code.replace(
             /\b(\d+)\b/g,
             (a,b)=>"<span class=\"token number\">"+b+"</span>");
         return "<code>"+code+"</code>";
-      })
+      });
     return html;
   },
   
