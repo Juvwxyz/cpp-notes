@@ -1,16 +1,26 @@
 html body {
+  color: #dcdcdc;
   background-color: #1E1E1E;
 }
+html body h1,
+html body h2,
+html body h3,
+html body h4,
+html body table th {
+  color: #dadada;
+}
+
+html body strong {
+  color: #dddddd;
+}
 .markdown-preview {
-  font-family: "汉仪玄宋", "Noto Serif CJK SC";
+  font-family: "汉仪玄宋", "Noto Serif CJK SC", 'Times New Roman', Times, serif;
   font-size: 24px;
 }
 html body ul li {
   margin: 0.5em 0
 }
 html body code {
-  font-family: "Cascadia Code", "汉仪玄宋";
-  font-weight: 350;
   padding: .05em .25em;
   margin: 0 .1em;
 }
@@ -24,11 +34,13 @@ html body code::after {
 html body em {
   margin: 0 -.2em;
 }
+html body code,
+html body blockquote,
 pre[class*="language-"],
 pre[class*="language-"] code {
-  font-family: "Cascadia Code PL SemiLight", "汉仪玄宋", monospace;
-  font-weight: 350;
   color: #DCDCDC;
+  background-color: #2e2e2e;
+  font-family: "Cascadia Code PL SemiLight", "汉仪玄宋", monospace;
 }
 pre[class*="language-"] .token.punctuation {
   color: #DCDCDC;
