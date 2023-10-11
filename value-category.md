@@ -63,33 +63,42 @@ str = "Hello again.";
 
 C++98正式出版时，基本沿用了C语言的值类别模型，但具体的细节做了很多修改。首先是恢复了对非左值表达式`右值`（`rvalue`）的称呼，并将函数划分到左值的范畴，然后将C语言几种非左值表达式也划入了左值。
 
-到目前为止，值类别都很好的发挥着它的作用，直到C++11要引入移动语义。
+到目前为止，值类别都很好地发挥着它的作用，直到C++11要引入移动语义。
 
-来看这么一个例子：
+在程序中，我们经常要向操作系统请求很多的资源，例如动态分配的内存、打开的文件、创建的线程、建立的TCP连接，这些都可以算资源。管理这些资源最重要的工作就是管理它们的生命周期，也就是什么时候请求以及什么时候释放。
+
+C++中有一套叫RAII（Resource Acquisition Is Initialization）的技术来管理资源，直译过来的意思是资源获取即初始化。RAII将资源封入一个类，并且在构造函数中请求资源，在析构函数中释放资源。也就是将资源的生命周期绑定到对象的生命周期。
+
+恰当地使用RAII可以有效地确保资源安全。如果资源获取失败，构造函数抛出异常，那么已经构造的基类及子对象所获取的资源会以初始化的逆序释放。而构造成功的对象也保证了任何访问该对象的函数能够安全地访问它管理的资源。这有效地利用了语言特性（对象生存期、退出作用域、初始化顺序以及栈回溯）以消除内存泄漏并保证异常安全。
+
+但是由于资源与对象的生命周期绑定，在需要跨作用域传递资源的时候就不是那么方便了。例如将函数内的局部对象返回给调用方，这时往往会发生复制，如果对象管理着一段很大的内存，那么内存复制就会成为性能的瓶颈。
 
 ```cpp
-#include <vector>
+#include <algorithm>
 #include <iostream>
 
-std::vector<int> create_vector() {
-  std::vector<int> ret;
+struct vector {
+  vector() : data{new int[100]} {}
+  vector(const vector& vec) : data{new int[100]} {
+    std::copy(vec.data, vec.data+100, this->data);
+  }
+  int* data;
+};
+
+vector create_vector() {
+  vector ret;
   for(int i = 0; i < 100; i++)
-    ret.push_back(i);
+    ret.data[i] = i;
   return ret;
 }
 
-void create_vector(std::vector<int>& vec) {
-  vec.clear();
-  for(int i = 0; i < 100; i++)
-    vec.push_back(i);
-}
-
 int main() {
-  std::vector<int> vec;
-  vec = create_vector(); // 发生复制
-  create_vector(vec);    // 在C++11之前，只能传引用或指针以避免复制。
+  // create_vector内构造好ret之后，再复制到vec来。
+  vector<int> = create_vector();
 }
 ```
+
+例如上面这段代码，在函数`create_vector`中创建一个`vector`，执行一些初始化操作然后将他返回。在不考虑返回值优化的情况下，返回的过程会发生复制。在C语言中，函数返回一个`struct`，那么返回的过程就有一次内存复制。在C++中，平凡类也遵循这一语义，如果自定义类型的复制构造函数或者复制赋值运算符有用户提供的重载，那么返回的过程就会调用这一函数，将函数内的局部对象复制到调用方的那个对象中。
 
 > TODO 待完善
 
@@ -154,7 +163,7 @@ decltype((c)) k = a; // int&
 根据这一性质，我们可以写一个宏来打印表达式的值类别：
 
 ```cpp
-#define value_category_of(expr)                     \
+#define vc_of(expr)                                 \
   (std::is_lvalue_reference_v<decltype((expr))> ?   \
     puts("( "#expr" ) -> lvalue") :                 \
    std::is_rvalue_reference_v<decltype((expr))> ?   \
@@ -174,7 +183,7 @@ decltype((c)) k = a; // int&
   ```cpp
   auto *p1 = &"Hello world."; // const char (*)[13]
   auto &p2 = "Hello world.";  // const char (&)[13]
-  value_category_of("Hello world.");
+  vc_of("Hello world."); // -> lvalue
   ```
 
 - 名字表达式。对象、引用、函数、数据成员、结构化绑定、模板形参对象的名字构成的表达式是左值表达式。即使是右值引用也如此，由它的名字构成的表达式仍然是左值。
@@ -187,11 +196,11 @@ decltype((c)) k = a; // int&
   template<A a>
   void foo() {
     // a是模板形参对象
-    value_category_of(a);
+    vc_of(a); // -> lvalue
   }
 
   int main() {
-    value_category_of(std::cin);
+    vc_of(std::cin); // -> lvalue
 
     //OK，绑定引用到函数。
     std::ostream& (&b)(std::ostream&) = std::endl;
@@ -200,7 +209,7 @@ decltype((c)) k = a; // int&
 
     int &&rref = 42;
     // 右值引用的名字构成的表达式是左值
-    value_category_of(rref);
+    vc_of(rref); // -> lvalue
   }
   ```
 
@@ -208,18 +217,18 @@ decltype((c)) k = a; // int&
 
   ```cpp
   int a = 0, *p = &a;
-  value_category_of(a = 42);
-  value_category_of(a += 42);
-  value_category_of(++a);
-  value_category_of(*p);
+  vc_of(a = 42);  // -> lvalue
+  vc_of(a += 42); // -> lvalue
+  vc_of(++a);     // -> lvalue
+  vc_of(*p);      // -> lvalue
   ```
 
 - 内建的下标表达式`a[n]`，其中一个操作数是数组左值或指针。
 
   ```cpp
   int a[2] {}, *p = a;
-  value_category_of(p[0]);
-  value_category_of(a[1]);
+  vc_of(p[0]);
+  vc_of(a[1]);
   ```
 
 - 成员访问表达式`a.m`&#8203;`p->m`&#8203;`a.*mp`&#8203;`p->*mp`中，`m`是静态数据成员或静态成员函数；或者`a`是左值并且`m`是非静态数据成员的情况。后三种形式可算作第一种的特殊形式，关于成员访问表达式的详细分类方式可参见后文的[表格](#27-成员访问表达式)。
@@ -230,8 +239,8 @@ decltype((c)) k = a; // int&
     static void foo() {}
   } a;
   int main() {
-    value_category_of(a.a);
-    value_category_of(a.foo);
+    vc_of(a.a);   // -> lvalue
+    vc_of(a.foo); // -> lvalue
   }
   ```
 
@@ -243,11 +252,11 @@ decltype((c)) k = a; // int&
 
   int main() {
     std::string str;
-    value_category_of(static_cast<std::string&>(str));
+    vc_of(static_cast<std::string&>(str)); // -> lvalue
     // getline 返回 istream&
-    value_category_of(std::getline(std::cin, line));
+    vc_of(std::getline(std::cin, line));   // -> lvalue
     // 重载的 operator<< 返回 ostream&
-    value_category_of(std::cout << "Hello world.\n");
+    vc_of(std::cout << "Hello world.\n");  // -> lvalue
   }
   ```
 
@@ -260,8 +269,8 @@ decltype((c)) k = a; // int&
   func&& bar() { return foo; }
 
   int main() {
-    value_category_of(static_cast<func&&>(foo));
-    value_category_of(bar());
+    vc_of(static_cast<func&&>(foo)); // -> lvalue
+    vc_of(bar()); // -> lvalue
   }
   ```
 
@@ -270,7 +279,7 @@ decltype((c)) k = a; // int&
   ```cpp
   int a = 0, b;
   (a, b) = 42; // OK，修改了b
-  value_category_of((a, b));
+  vc_of((a, b)); // -> lvalue
   ```
 
 - 条件表达式`c ? a : b`的某些情况。例如`a`和`b`是类型相同的左值，或者其中一个是`throw`表达式而另一个是左值，具体情况比较复杂，可参阅[cppreference](https://zh.cppreference.com/w/cpp/language/operator_other#.E6.9D.A1.E4.BB.B6.E8.BF.90.E7.AE.97.E7.AC.A6)。
@@ -281,9 +290,9 @@ decltype((c)) k = a; // int&
   (false ? throw 0 : b) = 42; // OK，修改了b
   ( true ? a : 0) = 42; // Error，此条件表达式是纯右值
 
-  value_category_of(true ? a : b);
-  value_category_of(false ? throw 0 : b);
-  value_category_of(true ? a : 0);
+  vc_of(true ? a : b);        // -> lvalue
+  vc_of(false ? throw 0 : b); // -> lvalue
+  vc_of(true ? a : 0);        // -> prvalue
   ```
 
 - 具有左值引用类型的非类型模板形参。
@@ -293,8 +302,8 @@ decltype((c)) k = a; // int&
   template<int& a, int b>
   void foo() {
     a = b; // OK, (a)是左值，(b)是纯右值。
-  value_category_of(a);
-  value_category_of(b);
+  vc_of(a); // -> lvalue
+  vc_of(b); // -> prvalue
   }
   int main() {
     // 左值引用非类型模板形参必须绑定到静态存储期的对象
@@ -327,15 +336,15 @@ decltype((c)) k = a; // int&
     return (char&&)a;
   }
   int main() {
-    value_category_of('a');
-    value_category_of(114);
-    value_category_of(3.14);
-    value_category_of(true);
-    value_category_of(false);
-    value_category_of(nullptr);
-    value_category_of(0_a);   // -> prvalue
-    value_category_of(0.0_a); // -> lvalue
-    value_category_of('a'_a); // -> xvalue
+    vc_of('a');
+    vc_of(114);
+    vc_of(3.14);
+    vc_of(true);
+    vc_of(false);
+    vc_of(nullptr);
+    vc_of(0_a);     // -> all above are prvalues
+    vc_of(0.0_a);   // -> lvalue
+    vc_of('a'_a);   // -> xvalue
   }
   ```
 
@@ -343,7 +352,7 @@ decltype((c)) k = a; // int&
 
   ```cpp
   enum E { e1, e2 };
-  value_category_of(e1);
+  vc_of(e1); // -> prvalue
   ```
 
 - `this`指针。
@@ -351,7 +360,7 @@ decltype((c)) k = a; // int&
   ```cpp
   struct A {
     void foo() {
-      value_category_of(this);
+      vc_of(this); // -> prvalue
     }
   };
   int main() {
@@ -363,24 +372,27 @@ decltype((c)) k = a; // int&
 
   ```cpp
   int a, b;
-  value_category_of(a++);
-  value_category_of(+a);
-  value_category_of(a+b);
-  value_category_of(a^b);
-  value_category_of(a>=b);
-  value_category_of(&a);
+  // all these are prvalues
+  vc_of(a++);
+  vc_of(+a);
+  vc_of(a+b);
+  vc_of(a^b);
+  vc_of(a>=b);
+  vc_of(&a);
   ```
 
 - 内建的逗号表达式`a, b`中，`b`是纯右值的情况。
 
   ```cpp
-  value_category_of((a,0));
+  // prvalue
+  vc_of((a,0));
   ```
 
 - 条件表达式`c ? a : b`的某些情况。例如`a`和`b`其中一个是纯右值，具体情况比较复杂，可参阅[cppreference](https://zh.cppreference.com/w/cpp/language/operator_other#.E6.9D.A1.E4.BB.B6.E8.BF.90.E7.AE.97.E7.AC.A6)。
 
   ```cpp
-  value_category_of(true?0:a);
+  // prvalue
+  vc_of(true?0:a);
   ```
 
 - 成员访问表达式`a.m`&#8203;`p->m`&#8203;`a.*mp`&#8203;`p->*mp`中，`m`是非静态成员函数或成员枚举项的情况。访问非静态成员函数的成员访问表达式是一种特殊的纯右值表达式，它只能用作函数调用运算符的左操作数。
@@ -392,9 +404,9 @@ decltype((c)) k = a; // int&
   };
   int main() {
     A a;
-    value_category_of(a.e1);
+    vc_of(a.e1); // -> prvalue
     // 无法直接检测这种表达式的值类别
-    // value_category_of(a.foo);
+    // vc_of(a.foo);
     a.foo();
   }
   ```
@@ -402,9 +414,9 @@ decltype((c)) k = a; // int&
 - 转换到非引用类型的转型表达式、返回类型是非引用的函数调用或重载运算符表达式。
 
   ```cpp
-  value_category_of((int)2.5);
-  value_category_of(std::string("Hello"));
-  value_category_of(printf("Hello"));
+  vc_of((int)2.5); // -> prvalue
+  vc_of(std::string("Hello")); // -> prvalue
+  vc_of(printf("Hello")); // -> prvalue
   ```
 
 - 标量类型的非类型模板形参。
@@ -412,7 +424,7 @@ decltype((c)) k = a; // int&
   ```cpp
   template<size_t N>
   void foo() {
-    value_category_of(N);
+    vc_of(N); // -> prvalue
   }
   int main() {
     foo<0>();
@@ -422,14 +434,14 @@ decltype((c)) k = a; // int&
 - lambda表达式。
   
   ```cpp
-    value_category_of([]{});
+    vc_of([]{}); // -> prvalue
   ```
 
 - `requires`表达式和概念的特化。
 
   ```cpp
-  value_category_of(requires{ 1 + 1; });
-  value_category_of((std::same_as<int, float>));
+  vc_of(requires{ 1 + 1; });         // -> prvalue
+  vc_of((std::same_as<int, float>)); // -> prvalue
   ```
 
 ### 2.4 亡值（xvalue）
@@ -443,37 +455,37 @@ decltype((c)) k = a; // int&
   ```cpp
   struct A { int a; };
   int main() {
-    value_category_of(A().a);
+    vc_of(A().a); // -> xvalue
   }
   ```
 
 - 内建的下标表达式`a[n]`，其中一个操作数是数组右值。
 
   ```cpp
-  using arr = int[3];
+  using arr = int[1];
   int main() {
-    value_category_of((arr{1,2,3}[0]));
+    vc_of((arr{1}[0])); // -> xvalue
   }
   ```
 
 - 内建的逗号表达式`a, b`中，`b`是亡值的情况。
 
   ```cpp
-  value_category_of((0, arr{1,2,3}[0]));
+  vc_of((0, arr{1}[0])); // -> xvalue
   ```
 
 - 条件表达式`c ? a : b`的某些情况。例如`a`和`b`是相同类型的亡值，具体情况比较复杂，可参阅[cppreference](https://zh.cppreference.com/w/cpp/language/operator_other#.E6.9D.A1.E4.BB.B6.E8.BF.90.E7.AE.97.E7.AC.A6)。
 
   ```cpp
-  value_category_of((true?arr{1,2,3}[0]:arr{1,2,3}[1]));
+  vc_of((true?arr{1}[0]:arr{2}[1])); // -> xvalue
   ```
 
 - 转换到对象类型右值引用的转型表达式、返回类型类为对象类型右值引用的函数调用表达式，其中也包括重载的运算符。例如`static_cast<int&&>(x)`&#8203;`std::move(x)`。
 
   ```cpp
   int a;
-  value_category_of(std::move(a));
-  value_category_of((int&&)a);
+  vc_of(std::move(a)); // -> xvalue
+  vc_of((int&&)a);     // -> xvalue
   ```
 
 - 在临时量实质化后，任何指代该临时对象的表达式。
