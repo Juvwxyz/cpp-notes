@@ -2,8 +2,8 @@
 
 语言律师学习笔记
 
-- [`if`语句](if-statement.md)
-- [结构化绑定](structured-binding.md)
+- [`if`语句](blogs/if-statement.md)
+- [结构化绑定](blogs/structured-binding.md)
 
 ## 推荐的阅读方式
 
