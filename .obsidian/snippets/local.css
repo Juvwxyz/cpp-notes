@@ -1,0 +1,143 @@
+
+html body {
+    color: #dcdcdc;
+    background-color: #1E1E1E;
+    --file-line-width: 960px;
+}
+
+html body h1,
+html body h2,
+html body h3,
+html body h4,
+html body table th {
+    color: #dadada;
+}
+
+html body strong {
+    color: #dddddd;
+}
+
+.markdown-preview {
+    font-family: "汉仪玄宋", "Noto Serif CJK SC", 'Times New Roman', Times, serif;
+    font-size: 24px;
+}
+
+html body ul li {
+    margin: 0.5em 0
+}
+
+html body code {
+    padding: .05em .25em;
+    margin: 0 .1em;
+}
+
+html body code::before,
+html body code::after {
+    content: none;
+}
+
+.full-width-punct {
+    letter-spacing: -.5em;
+}
+
+html body em {
+    margin: 0 -.2em;
+}
+
+html body code,
+html body blockquote,
+pre[class*="language-"],
+pre[class*="language-"] code {
+    color: #DCDCDC;
+    background-color: #2e2e2e;
+    font-family: "Cascadia Code PL SemiLight", "汉仪玄宋", monospace;
+}
+
+pre[class*="language-"] .token.punctuation {
+    color: #DCDCDC;
+}
+
+pre[class*="language-"] .token.directive-hash,
+pre[class*="language-"] .token.directive.keyword {
+    color: #9A9A9A;
+}
+
+.token.string,
+pre[class*="language-"] .token.char,
+pre[class*="language-"] .token.string {
+    color: #D69D85;
+}
+
+.token.function,
+pre[class*="language-"] .token.function {
+    color: #DCDCAA;
+}
+
+.token.keyword,
+pre[class*="language-"] .token.boolean,
+pre[class*="language-"] .token.keyword {
+    color: #569ED6;
+}
+
+.token.class-name,
+pre[class*="language-"] .token.class-name {
+    color: #4EC9B0;
+}
+
+.token.keyword.control,
+pre[class*="language-"] .token.keyword.keyword-if,
+pre[class*="language-"] .token.keyword.keyword-else,
+pre[class*="language-"] .token.keyword.keyword-goto,
+pre[class*="language-"] .token.keyword.keyword-try,
+pre[class*="language-"] .token.keyword.keyword-catch,
+pre[class*="language-"] .token.keyword.keyword-throw,
+pre[class*="language-"] .token.keyword.keyword-co_return,
+pre[class*="language-"] .token.keyword.keyword-co_await,
+pre[class*="language-"] .token.keyword.keyword-co_yield,
+pre[class*="language-"] .token.keyword.keyword-switch,
+pre[class*="language-"] .token.keyword.keyword-case,
+pre[class*="language-"] .token.keyword.keyword-default,
+pre[class*="language-"] .token.keyword.keyword-break,
+pre[class*="language-"] .token.keyword.keyword-while,
+pre[class*="language-"] .token.keyword.keyword-do,
+pre[class*="language-"] .token.keyword.keyword-for,
+pre[class*="language-"] .token.keyword.keyword-continue,
+pre[class*="language-"] .token.keyword.keyword-return {
+    color: #D8A0DF;
+}
+
+.token.number,
+pre[class*="language-"] .token.number {
+    color: #B5CEA8;
+}
+
+.token.operator,
+pre[class*="language-"] .token.operator {
+    color: #B4B4B4;
+}
+
+.token.comment,
+pre[class*="language-"] .token.comment {
+    color: #57A64A;
+}
+
+.token.constant,
+pre[class*="language-"] .token.constant {
+    color: #BEB7FF;
+}
+
+.token.macro-name.function,
+pre[class*="language-"] .token.macro-name.function {
+    color: #beb7ff;
+}
+
+.token.macro.property,
+pre[class*="language-"] .token.macro.property {
+    color: #dcdcdc;
+}
+
+:root{
+    --r-main-font: "汉仪玄宋", "Noto Serif CJK SC", 'Times New Roman', Times, serif;
+    --r-heading-font: "汉仪玄宋", "Noto Serif CJK SC", 'Times New Roman', Times, serif;
+    --r-code-font: "Cascadia Code PL SemiLight","汉仪玄宋", "Noto Serif CJK SC", 'Times New Roman', Times, serif;
+}

@@ -1,3 +1,4 @@
 # vscode settings
 .vscode
-.obsidian
+.obsidian/*
+!.obsidian/snippets
